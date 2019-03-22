@@ -1,0 +1,200 @@
+---
+- name: Add or remove OpenSSH packages based on STIG requirements
+  yum:
+    # yamllint disable-line rule:line-length
+    name: "{{ stig_packages_rhel7 | selectattr('enabled') | selectattr('state', 'equalto', item) | sum(attribute='packages', start=[]) }}"
+    state: "{{ item }}"
+  with_items:
+    # yamllint disable-line rule:line-length
+    - "{{ stig_packages_rhel7 | selectattr('enabled') | map(attribute='state') | unique | list }}"
+  tags:
+    - cat1
+    - auth
+    - packages
+    - services
+    - V-71897
+    - V-71967
+    - V-71969
+    - V-72067
+    - V-72077
+    - V-72213
+    - V-72233
+    - V-72301
+    - V-72307
+
+- name: Make sure ECDSA keys are not autocreated
+  lineinfile:
+    dest: /etc/sysconfig/sshd
+    state: present
+    owner: "{{ sshd_config_owner }}"
+    group: "{{ sshd_config_group }}"
+    mode: 0640
+    seuser: system_u
+    serole: object_r
+    setype: etc_t
+    selevel: s0
+    backup: 'yes'
+    line: 'AUTOCREATE_SERVER_KEYS: "RSA ED25519"'
+    insertafter: '^# AUTOCREATE_SERVER_KEYS'
+  tags:
+    - high
+    - sshd
+
+- name: Generate the ED25519 key with defined options
+  shell: >
+    ssh-keygen -t ed25519 -o -a 100 -f ssh_host_ed25519_key -N "" < /dev/null
+  args:
+    chdir: /etc/ssh
+    creates: /etc/ssh/ssh_host_ed25519_key
+  tags:
+    - high
+    - sshd
+
+- name: Generate the RSA key with defined options
+  shell: >
+    ssh-keygen -t rsa -b 4096 -o -a 100 -f ssh_host_rsa_key -N "" < /dev/null
+  args:
+    chdir: /etc/ssh
+    creates: /etc/ssh/ssh_host_rsa_key
+  tags:
+    - high
+    - sshd
+
+- name: Public host key files must have mode 0644 or less
+  file:
+    path: "{{ item }}"
+    owner: "{{ sshd_config_owner }}"
+    group: "{{ sshd_config_group }}"
+    mode: 0644
+    seuser: system_u
+    serole: object_r
+    setype: sshd_key_t
+    selevel: s0
+  with_fileglob:
+    - /etc/ssh/*.pub
+  tags:
+    - medium
+    - sshd
+    - V-72255
+
+- name: Private host key files must have mode 0640 or less
+  file:
+    path: "{{ item }}"
+    owner: "{{ sshd_config_owner }}"
+    group: ssh_keys
+    mode: 0640
+    seuser: system_u
+    serole: object_r
+    setype: sshd_key_t
+    selevel: s0
+  with_fileglob:
+    - /etc/ssh/*_key
+  tags:
+    - medium
+    - sshd
+    - V-72257
+
+- name: Copy login warning banner
+  copy:
+    content: "{{ security_login_banner_text }}"
+    dest: "{{ security_sshd_banner_file }}"
+    owner: "{{ sshd_config_owner }}"
+    group: "{{ sshd_config_group }}"
+    mode: 0644
+    seuser: system_u
+    serole: object_r
+    setype: etc_t
+    selevel: s0
+    backup: 'yes'
+  tags:
+    - high
+    - sshd
+    - V-71861
+    - V-72225
+
+- name: Adjust ssh server configuration based on STIG requirements
+  template:
+    src: sshd_config.j2
+    dest: "{{ sshd_config_file }}"
+    owner: "{{ sshd_config_owner }}"
+    group: "{{ sshd_config_group }}"
+    mode: "{{ sshd_config_mode }}"
+    seuser: system_u
+    serole: object_r
+    setype: etc_t
+    selevel: s0
+    backup: 'yes'
+    validate: "{{ sshd_binary }} -T -f %s"
+  notify:
+    - reload_sshd
+  tags:
+    - high
+    - sshd
+    - V-71939
+    - V-71957
+    - V-71959
+    - V-72221
+    - V-72225
+    - V-72237
+    - V-72241
+    - V-72245
+    - V-72247
+    - V-72249
+    - V-72243
+    - V-72243
+    - V-72303
+    - V-72251
+    - V-72253
+    - V-72265
+    - V-72267
+    - V-72261
+    - V-72263
+
+- name: Ensure sshd is enabled at boot time
+  systemd:
+    name: "{{ sshd_service }}"
+    enabled: 'yes'
+    masked: 'no'
+  when:
+    - ansible_virtualization_type != 'docker'
+    - security_enable_sshd | bool
+  tags:
+    - medium
+    - sshd
+    - V-72235
+
+- name: Create private client configuration directory
+  file:
+    path: /etc/ssh/ssh_config.d
+    state: directory
+    owner: "{{ sshd_config_owner }}"
+    group: "{{ sshd_config_group }}"
+    mode: 0755
+    seuser: system_u
+    serole: object_r
+    setype: etc_t
+    selevel: s0
+  tags:
+    - high
+    - sshd
+
+- name: Adjust ssh client configuration based on STIG requirements
+  template:
+    src: 99-ansible-hardening.conf.j2
+    dest: /etc/ssh/ssh_config.d/99-ansible-hardening.conf
+    owner: "{{ sshd_config_owner }}"
+    group: "{{ sshd_config_group }}"
+    mode: 0644
+    seuser: system_u
+    serole: object_r
+    setype: etc_t
+    selevel: s0
+    backup: 'yes'
+  tags:
+    - high
+    - sshd
+
+# TODO: moduli
+# awk '$5 > 2000' /etc/ssh/moduli > "${HOME}/moduli"
+# wc -l "${HOME}/moduli" # make sure there is something left
+# mv "${HOME}/moduli" /etc/ssh/moduli

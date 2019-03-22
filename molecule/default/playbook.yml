@@ -1,0 +1,6 @@
+---
+- name: Converge
+  connection: local
+  hosts: all
+  roles:
+    - role: ansible-os-hardening-sshd

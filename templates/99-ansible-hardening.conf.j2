@@ -1,0 +1,14 @@
+# {{ ansible_managed }}
+# https://stribika.github.io/2015/01/04/secure-secure-shell.html
+# Github needs diffie-hellman-group-exchange-sha1 some of the time but not always.
+#Host github.com
+#    KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256,diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1
+
+Host *
+    ChallengeResponseAuthentication {{ security_sshd_ChallengeResponseAuthentication }}
+    Ciphers {{ security_sshd_Ciphers }}
+    HostKeyAlgorithms {{ security_sshd_HostKeyAlgorithms }}
+    KexAlgorithms {{ security_sshd_KexAlgorithms }}
+    MACs {{ security_sshd_MACs }}
+    PasswordAuthentication {{ security_sshd_PasswordAuthentication }}
+    PubkeyAuthentication {{ security_sshd_PubkeyAuthentication }}

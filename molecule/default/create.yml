@@ -1,0 +1,8 @@
+---
+- name: No create steps
+  connection: local
+  hosts: all
+  tasks:
+    - name: No create steps
+      debug:
+        msg: "Lorem ipsum"

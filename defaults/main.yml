@@ -1,0 +1,145 @@
+---
+## OpenSSH server
+# Set the package install state for distribution packages
+# Options are 'present' and 'latest'
+security_package_state: present
+# Don't apply OS defaults when set to true
+security_sshd_skip_defaults: 'True'
+# If the below is false, don't manage the service or reload the SSH
+# daemon at all
+# yamllint disable-line rule:line-length
+security_sshd_manage_service: "{{ false if ansible_virtualization_type == 'docker' else true }}"
+# If the below is false, don't reload the ssh deamon on change
+security_sshd_allow_reload: "{{ sshd_manage_service }}"
+# Ensure sshd is running and enabled at boot time.
+security_enable_sshd: 'yes'                                    # V-72235
+
+## Server side configuration
+security_sshd_Port: 22
+#security_sshd_AddressFamily
+#security_sshd_ListenAddress
+# Set the allowed ssh protocols.
+security_sshd_Protocol: 2                                    # V-72251
+#security_sshd_HostKey
+#security_sshd_AcceptEnv
+security_sshd_AllowAgentForwarding: 'no'
+#security_sshd_AllowGroups
+security_sshd_AllowStreamLocalForwarding: 'no'
+security_sshd_AllowTcpForwarding: 'no'
+#security_sshd_AllowUsers
+#security_sshd_AuthenticationMethods
+#security_sshd_AuthorizedKeysCommand
+#security_sshd_AuthorizedKeysCommandUser
+#security_sshd_AuthorizedKeysFile
+#security_sshd_AuthorizedPrincipalsFile
+# Specify a text file to be displayed as the banner/MOTD for all sessions.
+security_sshd_banner_file: /etc/issue                         # V-71861 / V-72225
+# Deploy a login banner.                                     # V-72225 / V-71863
+security_login_banner_text: |
+  ------------------------------------------------------------------------------
+  * WARNING                                                                    *
+  * You are accessing a secured system and your actions will be logged along   *
+  * with identifying information. Disconnect immediately if you are not an     *
+  * authorized user of this system.                                            *
+  ------------------------------------------------------------------------------
+#security_sshd_Banner
+security_sshd_ChallengeResponseAuthentication: 'yes'
+#security_sshd_ChrootDirectory
+#security_sshd_Ciphers
+# Set a list of allowed ssh ciphers.
+# yamllint disable-line rule:line-length
+security_sshd_Ciphers: 'chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr'  # V-72221
+# Set the interval for max session length and the number of intervals to allow.
+security_sshd_ClientAliveCountMax: 0                       # V-72241
+security_sshd_ClientAliveInterval: 600                     # V-72237
+# Disallow compression or delay after login.
+security_sshd_Compression: 'delayed'                       # V-72267
+#security_sshd_DenyGroups
+#security_sshd_DenyUsers
+security_sshd_DisableForwarding: 'yes'
+#security_sshd_ExposeAuthenticationMethods
+#security_sshd_FingerprintHash
+#security_sshd_ForceCommand
+#security_sshd_GatewayPorts
+# Disallow Generic Security Service Application Program Interface (GSSAPI) auth.
+security_sshd_GSSAPIAuthentication: 'no'                            # V-72259
+#security_sshd_GSSAPICleanupCredentials
+#security_sshd_GSSAPIKeyExchange
+#security_sshd_GSSAPIEnablek5users
+#security_sshd_GSSAPIStoreCredentialsOnRekey
+#security_sshd_GSSAPIStrictAcceptorCheck
+#security_sshd_GSSAPIKexAlgorithms
+# yamllint disable-line rule:line-length
+#security_sshd_HostbasedAcceptedKeyTypes: 'ssh-ed25519-cert-v01@openssh.com,ssh-rsa-cert-v01@openssh.com,ssh-dss-cert-v01@openssh.com,ssh-ed25519,ssh-rsa'
+# Disallow host based authentication.
+security_sshd_HostbasedAuthentication: 'no'                  # V-71959
+#security_sshd_HostbasedUsesNameFromPacketOnly
+#security_sshd_HostCertificate
+#security_sshd_HostKeyAgent
+# Disallow rhosts authentication.
+security_sshd_IgnoreRhosts: 'yes'                      # V-72243
+# Disallow authentication using known hosts authentication.
+# yamllint disable-line rule:line-length
+security_sshd_IgnoreUserKnownHosts: 'yes'                 # V-72249 / V-72239
+#security_sshd_IPQoS
+#security_sshd_KbdInteractiveAuthentication
+# Disallow Kerberos authentication.
+security_sshd_KerberosAuthentication: 'no'                     # V-72261
+#security_sshd_KerberosGetAFSToken
+#security_sshd_KerberosOrLocalPasswd
+#security_sshd_KerberosTicketCleanup
+#security_sshd_KerberosUseKuserok
+# yamllint disable-line rule:line-length
+security_sshd_KexAlgorithms: 'curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256'
+#security_sshd_KeyRegenerationInterval
+#security_sshd_LoginGraceTime
+#security_sshd_LogLevel
+# Set the list of allowed Message Authentication Codes (MACs) for ssh.
+# yamllint disable-line rule:line-length
+security_sshd_MACs: 'hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256'    # V-72253
+#security_sshd_MaxAuthTries
+#security_sshd_MaxSessions
+#security_sshd_MaxStartups
+security_sshd_PasswordAuthentication: 'no'
+# Disallow logins from users with empty/null passwords.
+security_sshd_PermitEmptyPasswords: 'no'      # V-71939 / RHEL-07-010440
+#security_sshd_PermitOpen
+# Permit direct root logins
+security_sshd_PermitRootLogin: 'no'                          # V-72247
+#security_sshd_PermitTTY
+#security_sshd_PermitTunnel
+# Disallow users from overriding the ssh environment variables.
+security_sshd_PermitUserEnvironment: 'no'             # V-71957
+security_sshd_PermitUserRC: 'no'                      # V-71957
+#security_sshd_PidFile
+# Print the last login for a user when they log in over ssh.
+security_sshd_PrintLastLog: 'yes'                            # V-72245
+security_sshd_PrintMotd: 'no'
+security_sshd_PubkeyAuthentication: 'yes'
+#security_sshd_RekeyLimit
+#security_sshd_RevokedKeys
+#security_sshd_RhostsRSAAuthentication
+##security_sshd_RSAAuthentication
+#security_sshd_ServerKeyBits
+#security_sshd_ServerKeyBits
+# Require strict mode checking of home directory configuration files.
+security_sshd_StrictModes: 'yes'                       # V-72263
+security_sshd_Subsystem: 'sftp sftp-internal'
+#security_sshd_SyslogFacility
+#security_sshd_TCPKeepAlive
+#security_sshd_TrustedUserCAKeys
+#security_sshd_UseDNS
+#security_sshd_UsePAM
+# Require privilege separation at every opportunity.
+security_sshd_UsePrivilegeSeparation: 'yes'               # V-72265
+#security_sshd_VersionAddendum
+#security_sshd_X11DisplayOffset
+# Enable X11 forwarding.
+security_sshd_X11Forwarding: 'no'                     # V-72303
+#security_sshd_X11UseLocalhost
+#security_sshd_XAuthLocation
+security_sshd_X11MaxDisplays: '10'
+
+## Client side configuration
+# yamllint disable-line rule:line-length
+security_sshd_HostKeyAlgorithms: 'ssh-ed25519-cert-v01@openssh.com,ssh-rsa-cert-v01@openssh.com,ssh-ed25519,ssh-rsa'

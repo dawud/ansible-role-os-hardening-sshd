@@ -1,0 +1,8 @@
+---
+- name: No destroy steps
+  connection: local
+  hosts: all
+  tasks:
+    - name: No destroy steps
+      debug:
+        msg: "Lorem ipsum"

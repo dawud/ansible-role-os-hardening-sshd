@@ -1,0 +1,14 @@
+---
+- name: reload_sshd
+  systemd:
+    name: "{{ sshd_service }}"
+    state: reloaded
+  when:
+    - ansible_virtualization_type != 'docker'
+
+- name: restart_sshd
+  systemd:
+    name: "{{ sshd_service }}"
+    state: restarted
+  when:
+    - ansible_virtualization_type != 'docker'
